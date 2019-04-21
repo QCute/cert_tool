@@ -65,11 +65,17 @@ function clean() {
 }
 
 function test() {
-    nodejs server.js ${domain}
+    if [[ -n ${2} ]];then
+        port=${2}
+    else
+        port=10000
+    fi
+    type nodejs > /dev/null 2>&1 || { echo >&2 "require nodejs but it's not installed."; exit 1;}
+    nodejs ${script}/js/server.js ${script}/cert/${domain} ${domain} ${port}
 }
 
 if [[ ! -n ${1} ]];then
-    echo "gen [gen_ca | gen_cert]  |  clean  |  test"
+    echo "gen [gen_ca | gen_cert]  |  clean  |  test [port]"
 else
-    $1
+    $1 $*
 fi

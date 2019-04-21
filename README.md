@@ -1,6 +1,6 @@
 # cert_tool
 
 
-gen.sh gen [ca | cert] | clean | test(nodejs need)
+gen [gen_ca | gen_cert]  |  clean  |  test [port]
 
 change cert info in file gen.sh param define

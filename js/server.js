@@ -12,5 +12,5 @@ https.createServer(options, function(req, res) {
     res.writeHead(200);
     res.end('hello world');
 }).listen(8000, function(){
-    console.log('Open URL: https://' + args[0] + ':8000');
+    console.log('Open URL: https://' + args[1] + ':' + args[2]);
 });
