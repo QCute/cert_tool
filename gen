@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+function ca() {
+    rm -rf cert/ca/
+    mkdir -p cert
+    mkdir -p cert/ca/
+    openssl genrsa -out cert/ca/rootCA.key 2048
+    # preset
+    [[ -z "${COUNTRY}" ]] && COUNTRY="US"
+    [[ -z "${STATE}" ]] && STATE="CA"
+    [[ -z "${LOCATION}" ]] && LOCATION="GS"
+    [[ -z "${ORGANIZATION}" ]] && ORGANIZATION="OpenSSL"
+    [[ -z "${ORGANIZATION_UNIT}" ]] && ORGANIZATION_UNIT="OpenSSL"
+    [[ -z "${COMMON_NAME}" ]] && COMMON_NAME="OpenSSL"
+    [[ -z "${EMAIL}" ]] && EMAIL="mail@OpenSSL.org"
+    dnq=$(openssl rsa -outform PEM -pubout -in cert/ca/rootCA.key 2>/dev/null | openssl base64 -d | dd bs=1 skip=24 2>/dev/null | openssl sha1 -binary | openssl base64 | sed "s/\\//\\\\&/g")
+    openssl req -new -x509 -nodes -sha256 -days 3650 -key cert/ca/rootCA.key -subj "/C=${COUNTRY}/ST=${STATE}/L=${LOCATION}/O=${ORGANIZATION}/OU=${ORGANIZATION_UNIT}/CN=${COMMON_NAME}/emailAddress=${EMAIL}/dnQualifier=${dnq}" -extensions v3_ca -out cert/ca/rootCA.crt
+}
+
+function cert() {
+    [[ -z "${1}" ]] && helps && exit
+    rm -rf cert/"${1}"/
+    mkdir -p cert/
+    mkdir -p cert/"${1}"/
+    [[ -z "${COUNTRY}" ]] && COUNTRY="US"
+    [[ -z "${STATE}" ]] && STATE="CA"
+    [[ -z "${LOCATION}" ]] && LOCATION="GS"
+    [[ -z "${ORGANIZATION}" ]] && ORGANIZATION="OpenSSL"
+    [[ -z "${ORGANIZATION_UNIT}" ]] && ORGANIZATION_UNIT="OpenSSL"
+    [[ -z "${COMMON_NAME}" ]] && COMMON_NAME="OpenSSL"
+    [[ -z "${EMAIL}" ]] && EMAIL="mail@OpenSSL.org"
+    openssl req -newkey rsa:2048 -nodes -extensions v3_req -keyout cert/"${1}/${1}".key -subj "/C=${COUNTRY}/ST=${STATE}/L=${LOCATION}/O=${ORGANIZATION}/OU=${ORGANIZATION_UNIT}/CN=${COMMON_NAME}/emailAddress=${EMAIL}/" -out cert/"${1}/${1}".csr
+    openssl x509 -req -extensions v3_req -extfile <(printf "[ req ]\nreq_extensions = v3_req\n[ v3_req ]\nsubjectAltName=DNS.1:OpenSSL,DNS.2:*.%s,DNS.2:%s\n" "${1}" "${1}") -days 3650 -in cert/"${1}/${1}".csr -CA cert/ca/rootCA.crt -CAkey cert/ca/rootCA.key -CAcreateserial -out cert/"${1}/${1}".crt
+}
+
+function clean() {
+    rm -rf cert
+}
+
+function helps() {
+    echo "USAGE: $(basename "$0") [ca | cert example.com | clean]"
+    echo
+    echo "Available environment variable specific cert parameter"
+    echo "    COUNTRY                Cert Country Name"
+    echo "    STATE                  Cert State Name"
+    echo "    LOCATION               Cert Location Name"
+    echo "    ORGANIZATION           Cert Organization Name"
+    echo "    ORGANIZATION_UNIT      Cert Organization Unit Name"
+    echo "    COMMON_NAME            Cert Common Name"
+    echo "    EMAIL                  Cert Email"
+}
+
+case "${1}" in
+    "ca")
+        shift
+        ca "$@"
+        ;;
+    "cert")
+        shift
+        cert "$@"
+        ;;
+    "clean")
+        clean
+        ;;
+    *)
+        helps
+        ;;
+esac
