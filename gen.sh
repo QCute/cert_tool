@@ -14,10 +14,10 @@ email=fake@fake.me
 domain=fake.me
 
 function gen_ca() {
-    if [[ ! -d "${script}/../cert" ]];then
-        mkdir ${script}/../cert
+    if [[ ! -d "${script}/cert/" ]];then
+        mkdir ${script}/cert/
     fi
-    cd ${script}/cert
+    cd ${script}/cert/
     # gen root CA
     ../bin/ca-gen -v \
         -c ${country} -s ${state} -l ${city} -o ${organization} -u ${unit} -n ${name} -e ${email} \
@@ -32,10 +32,10 @@ function gen_ca() {
 }
 
 function gen_cert(){
-    if [[ ! -d "${script}/../cert" ]];then
-        mkdir ${script}/../cert
+    if [[ ! -d "${script}/cert/" ]];then
+        mkdir ${script}/cert/
     fi
-    cd ${script}/cert
+    cd ${script}/cert/
     # gen ssl
     ../bin/cert-gen \
         -c ${country} -s ${state} -l ${city} -o ${organization} -u ${unit} -n ${name} -e ${email} \
